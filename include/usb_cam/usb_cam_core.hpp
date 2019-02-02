@@ -33,8 +33,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  *********************************************************************/
-#ifndef USB_CAM_USB_CAM_H
-#define USB_CAM_USB_CAM_H
+#ifndef USB_CAM_USB_CAM_CORE_HPP
+#define USB_CAM_USB_CAM_CORE_HPP
 
 #include <asm/types.h>          /* for videodev2.h */
 
@@ -72,7 +72,7 @@ extern "C"
 
 namespace usb_cam {
 
-class UsbCam {
+class UsbCamCore {
  public:
   typedef enum
   {
@@ -84,8 +84,8 @@ class UsbCam {
     PIXEL_FORMAT_YUYV, PIXEL_FORMAT_UYVY, PIXEL_FORMAT_MJPEG, PIXEL_FORMAT_YUVMONO10, PIXEL_FORMAT_RGB24, PIXEL_FORMAT_GREY, PIXEL_FORMAT_UNKNOWN
   } pixel_format;
 
-  UsbCam();
-  ~UsbCam();
+  UsbCamCore();
+  ~UsbCamCore();
 
   // start camera
   bool start(const std::string& dev, io_method io, pixel_format pf,
@@ -172,5 +172,4 @@ class UsbCam {
 
 }
 
-#endif
-
+#endif  // USB_CAM_USB_CAM_CORE_HPP

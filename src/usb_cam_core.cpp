@@ -54,7 +54,7 @@
 #include <boost/lexical_cast.hpp>
 // #include <sensor_msgs/fill_image.h>
 
-#include <usb_cam/usb_cam.h>
+#include <usb_cam/usb_cam_core.hpp>
 
 #define CLEAR(x) memset (&(x), 0, sizeof (x))
 
@@ -387,18 +387,18 @@ void rgb242rgb(char *YUV, char *RGB, int NumPixels)
 }
 
 
-UsbCam::UsbCam()
+UsbCamCore::UsbCamCore()
   : io_(IO_METHOD_MMAP), fd_(-1), buffers_(NULL), n_buffers_(0), avframe_camera_(NULL),
     avframe_rgb_(NULL), avcodec_(NULL), avoptions_(NULL), avcodec_context_(NULL),
     avframe_camera_size_(0), avframe_rgb_size_(0), video_sws_(NULL), image_(NULL), is_capturing_(false) {
   clock_ = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
 }
-UsbCam::~UsbCam()
+UsbCamCore::~UsbCamCore()
 {
   shutdown();
 }
 
-int UsbCam::init_mjpeg_decoder(int image_width, int image_height)
+int UsbCamCore::init_mjpeg_decoder(int image_width, int image_height)
 {
   avcodec_register_all();
 
@@ -444,7 +444,7 @@ int UsbCam::init_mjpeg_decoder(int image_width, int image_height)
   return 1;
 }
 
-bool UsbCam::mjpeg2rgb(char *MJPEG, int len, char *RGB, int NumPixels)
+bool UsbCamCore::mjpeg2rgb(char *MJPEG, int len, char *RGB, int NumPixels)
 {
   // INFO("mjpeg2rgb " << len << ", image 0x" << std::hex << (unsigned long int)RGB << std::dec << " " << NumPixels
   //     << ", avframe_rgb_size_ " << avframe_rgb_size_);
@@ -513,7 +513,7 @@ bool UsbCam::mjpeg2rgb(char *MJPEG, int len, char *RGB, int NumPixels)
   return true;
 }
 
-bool UsbCam::process_image(const void * src, int len, camera_image_t *dest)
+bool UsbCamCore::process_image(const void * src, int len, camera_image_t *dest)
 {
   // TODO(lucasw) return bool from all these
   if (pixelformat_ == V4L2_PIX_FMT_YUYV)
@@ -539,7 +539,7 @@ bool UsbCam::process_image(const void * src, int len, camera_image_t *dest)
   return true;;
 }
 
-bool UsbCam::read_frame()
+bool UsbCamCore::read_frame()
 {
   struct v4l2_buffer buf;
   unsigned int i;
@@ -670,11 +670,11 @@ bool UsbCam::read_frame()
   return true;
 }
 
-bool UsbCam::is_capturing() {
+bool UsbCamCore::is_capturing() {
   return is_capturing_;
 }
 
-bool UsbCam::stop_capturing(void)
+bool UsbCamCore::stop_capturing(void)
 {
   if (!is_capturing_) return false;
 
@@ -701,7 +701,7 @@ bool UsbCam::stop_capturing(void)
   return true;
 }
 
-bool UsbCam::start_capturing(void)
+bool UsbCamCore::start_capturing(void)
 {
   if (is_capturing_)
     return false;
@@ -772,7 +772,7 @@ bool UsbCam::start_capturing(void)
   return true;
 }
 
-bool UsbCam::uninit_device(void)
+bool UsbCamCore::uninit_device(void)
 {
   unsigned int i;
 
@@ -800,7 +800,7 @@ bool UsbCam::uninit_device(void)
   return true;
 }
 
-bool UsbCam::init_read(unsigned int buffer_size)
+bool UsbCamCore::init_read(unsigned int buffer_size)
 {
   buffers_ = (buffer*)calloc(1, sizeof(*buffers_));
 
@@ -821,7 +821,7 @@ bool UsbCam::init_read(unsigned int buffer_size)
   return true;
 }
 
-bool UsbCam::init_mmap(void)
+bool UsbCamCore::init_mmap(void)
 {
   struct v4l2_requestbuffers req;
 
@@ -887,7 +887,7 @@ bool UsbCam::init_mmap(void)
   return true;
 }
 
-bool UsbCam::init_userp(unsigned int buffer_size)
+bool UsbCamCore::init_userp(unsigned int buffer_size)
 {
   struct v4l2_requestbuffers req;
   unsigned int page_size;
@@ -938,7 +938,7 @@ bool UsbCam::init_userp(unsigned int buffer_size)
   return true;
 }
 
-bool UsbCam::init_device(int image_width, int image_height, int framerate)
+bool UsbCamCore::init_device(int image_width, int image_height, int framerate)
 {
   struct v4l2_capability cap;
   struct v4l2_cropcap cropcap;
@@ -1088,7 +1088,7 @@ bool UsbCam::init_device(int image_width, int image_height, int framerate)
   return true;
 }
 
-bool UsbCam::close_device(void)
+bool UsbCamCore::close_device(void)
 {
   if (-1 == close(fd_)) {
     std::cerr << "error, quitting, TODO throw " << errno << std::endl;
@@ -1099,7 +1099,7 @@ bool UsbCam::close_device(void)
   return true;
 }
 
-bool UsbCam::open_device(void)
+bool UsbCamCore::open_device(void)
 {
   struct stat st;
 
@@ -1125,7 +1125,7 @@ bool UsbCam::open_device(void)
   return true;
 }
 
-bool UsbCam::start(const std::string& dev, io_method io_method,
+bool UsbCamCore::start(const std::string& dev, io_method io_method,
 		   pixel_format pixel_format, int image_width, int image_height,
 		   int framerate)
 {
@@ -1190,7 +1190,7 @@ bool UsbCam::start(const std::string& dev, io_method io_method,
   return true;
 }
 
-bool UsbCam::shutdown(void)
+bool UsbCamCore::shutdown(void)
 {
   stop_capturing();
   uninit_device();
@@ -1214,7 +1214,7 @@ bool UsbCam::shutdown(void)
   return true;
 }
 
-bool UsbCam::get_image(builtin_interfaces::msg::Time& stamp,
+bool UsbCamCore::get_image(builtin_interfaces::msg::Time& stamp,
     std::string& encoding, uint32_t& height, uint32_t& width,
     uint32_t& step, std::vector<uint8_t>& data)
 {
@@ -1248,7 +1248,7 @@ bool UsbCam::get_image(builtin_interfaces::msg::Time& stamp,
   return true;
 }
 
-void UsbCam::get_formats()  // std::vector<usb_cam::msg::Format>& formats)
+void UsbCamCore::get_formats()  // std::vector<usb_cam::msg::Format>& formats)
 {
   INFO("formats:");
   struct v4l2_fmtdesc fmt;
@@ -1283,7 +1283,7 @@ void UsbCam::get_formats()  // std::vector<usb_cam::msg::Format>& formats)
   }  // fmt loop
 }
 
-bool UsbCam::grab_image()
+bool UsbCamCore::grab_image()
 {
   fd_set fds;
   struct timeval tv;
@@ -1323,7 +1323,7 @@ bool UsbCam::grab_image()
 }
 
 // enables/disables auto focus
-bool UsbCam::set_auto_focus(int value)
+bool UsbCamCore::set_auto_focus(int value)
 {
   struct v4l2_queryctrl queryctrl;
   struct v4l2_ext_control control;
@@ -1370,7 +1370,7 @@ bool UsbCam::set_auto_focus(int value)
 * @param param The name of the parameter to set
 * @param param The value to assign
 */
-bool UsbCam::set_v4l_parameter(const std::string& param, int value)
+bool UsbCamCore::set_v4l_parameter(const std::string& param, int value)
 {
   return set_v4l_parameter(param, boost::lexical_cast<std::string>(value));
 }
@@ -1380,7 +1380,7 @@ bool UsbCam::set_v4l_parameter(const std::string& param, int value)
 * @param param The name of the parameter to set
 * @param param The value to assign
 */
-bool UsbCam::set_v4l_parameter(const std::string& param, const std::string& value)
+bool UsbCamCore::set_v4l_parameter(const std::string& param, const std::string& value)
 {
   // build the command
   std::stringstream ss;
@@ -1406,7 +1406,7 @@ bool UsbCam::set_v4l_parameter(const std::string& param, const std::string& valu
     ROS_WARN("usb_cam_node could not run '%s'", cmd.c_str());
 }
 
-UsbCam::io_method UsbCam::io_method_from_string(const std::string& str)
+UsbCamCore::io_method UsbCamCore::io_method_from_string(const std::string& str)
 {
   if (str == "mmap")
     return IO_METHOD_MMAP;
@@ -1418,7 +1418,7 @@ UsbCam::io_method UsbCam::io_method_from_string(const std::string& str)
     return IO_METHOD_UNKNOWN;
 }
 
-UsbCam::pixel_format UsbCam::pixel_format_from_string(const std::string& str)
+UsbCamCore::pixel_format UsbCamCore::pixel_format_from_string(const std::string& str)
 {
     if (str == "yuyv")
       return PIXEL_FORMAT_YUYV;
@@ -1437,7 +1437,7 @@ UsbCam::pixel_format UsbCam::pixel_format_from_string(const std::string& str)
 }
 
 #if 0
-std::string UsbCam::pixel_format_to_string(__u32 pixelformat)
+std::string UsbCamCore::pixel_format_to_string(__u32 pixelformat)
 {
       return PIXEL_FORMAT_YUYV;
       return "yuyv";
@@ -1456,4 +1456,4 @@ std::string UsbCam::pixel_format_to_string(__u32 pixelformat)
 }
 #endif
 
-}
+}  // usb_cam
