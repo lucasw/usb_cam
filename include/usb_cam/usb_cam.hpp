@@ -114,6 +114,7 @@ public:
 
   bool take_and_send_image();
 
+  std::mutex mutex_;
   void update();
 };
 

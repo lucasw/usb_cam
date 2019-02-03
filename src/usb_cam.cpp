@@ -267,14 +267,16 @@ namespace usb_cam {
     if (!initted_) {
       init();
     }
+    // INFO("thread id 0x" << std::hex << std::this_thread::get_id() << std::dec);
+    std::lock_guard<std::mutex> update_lock(mutex_);
     if (cam_.is_capturing()) {
       // If the camera exposure longer higher than the framerate period
       // then that caps the framerate.
-      // auto t0 = now();
+      auto t0 = now();
       if (!take_and_send_image()) {
         WARN("USB camera did not respond in time.");
       }
-      // auto diff = now() - t0;
+      auto diff = now() - t0;
       // INFO(diff.nanoseconds() / 1e6 << " " << int(t0.nanoseconds() / 1e9));
     }
   }
