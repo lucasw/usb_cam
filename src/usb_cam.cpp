@@ -130,8 +130,6 @@ namespace usb_cam {
       cinfo_->setCameraInfo(camera_info);
     }
 #endif
-    img_ = std::make_shared<sensor_msgs::msg::Image>();
-    img_->header.frame_id = frame_id_;
 
     RCLCPP_INFO(this->get_logger(), "Starting '%s' (%s) at %dx%d via %s (%s) at %i FPS",
         camera_name_.c_str(), video_device_name_.c_str(),
@@ -165,7 +163,10 @@ namespace usb_cam {
       return;
     }
 
-    cam_.get_formats();
+    // TODO(lucasw) make param
+    if (false) {
+      cam_.get_formats();
+    }
 
 #if 0
     // set camera parameters
@@ -240,6 +241,8 @@ namespace usb_cam {
 
   bool UsbCam::take_and_send_image()
   {
+    img_ = std::make_shared<sensor_msgs::msg::Image>();
+    img_->header.frame_id = frame_id_;
     // grab the image
     if (!cam_.get_image(img_->header.stamp, img_->encoding, img_->height, img_->width,
         img_->step, img_->data)) {
