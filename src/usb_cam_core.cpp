@@ -548,6 +548,7 @@ bool UsbCamCore::read_frame()
   timespec buf_time;
   timespec real_time;
 
+  // TODO(lucasw) look at v4l2_read()
   switch (io_)
   {
     case IO_METHOD_READ:
@@ -1292,14 +1293,38 @@ bool UsbCamCore::grab_image()
   FD_ZERO(&fds);
   FD_SET(fd_, &fds);
 
-  /* Timeout. */
-  tv.tv_sec = 5;
+  // sleep between select calls to free up cpu
+  // this will cost some latency.
+#if 0
+  size_t usec_wait = 1000;
+  for (size_t i = 0; i < 1000; ++i) {
+    /* Timeout. */
+    tv.tv_sec = 0;
+    tv.tv_usec = usec_wait;
+
+    // this blocks until timeout- but don't want to consume cpu like that
+    r = select(fd_ + 1, &fds, NULL, NULL, &tv);
+    if (r > 0) {
+      // if the v4l2_buffer timestamp isn't available use this time, though
+      // it may be 10s of milliseconds after the frame acquisition.
+      image_->stamp = clock_->now();
+      break;
+    }
+    // this doesn't work because I think the above is edge triggered,
+    // so this makes it likely the frame will be missed entirely?
+    std::this_thread::sleep_for(std::chrono::milliseconds(usec_wait));
+  }
+#else
+  tv.tv_sec = 1;
   tv.tv_usec = 0;
 
+  // TODO(lucasw) measure time this takes
+  auto t0 = clock_->now();
+  // this blocks until timeout- but don't want to consume cpu like that
   r = select(fd_ + 1, &fds, NULL, NULL, &tv);
-  // if the v4l2_buffer timestamp isn't available use this time, though
-  // it may be 10s of milliseconds after the frame acquisition.
-  image_->stamp = clock_->now();
+  auto tdiff = clock_->now() - t0;
+  // std::cout << "usb_cam select time " << tdiff.nanoseconds() / 1e9 << "\n";
+#endif
 
   if (-1 == r)
   {
