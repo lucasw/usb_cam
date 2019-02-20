@@ -48,13 +48,14 @@
 
 namespace usb_cam {
 
-class UsbCam : public rclcpp::Node
+class UsbCam : public internal_pub_sub::Node
 {
 private:
   // TODO(lucasw) put more things into private
-  std::shared_ptr<internal_pub_sub::Core> core_;
 public:
-  UsbCam(std::shared_ptr<internal_pub_sub::Core> core=nullptr);
+  UsbCam();
+  virtual ~UsbCam();
+  void postInit(std::shared_ptr<internal_pub_sub::Core> core);
 
   UsbCamCore cam_;
   // shared image message
@@ -108,9 +109,6 @@ public:
 #endif
 
   bool initted_ = false;
-  void init();
-
-  virtual ~UsbCam();
 
   bool take_and_send_image();
 

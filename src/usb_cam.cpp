@@ -51,9 +51,14 @@ using namespace std::chrono_literals;
 
 namespace usb_cam {
 
-  UsbCam::UsbCam(std::shared_ptr<internal_pub_sub::Core> core) :
-      Node("usb_cam"), core_(core)
+  UsbCam::UsbCam()
   {
+  }
+
+  void UsbCam::postInit(std::shared_ptr<internal_pub_sub::Core> core)
+  {
+    internal_pub_sub::Node::postInit(core);
+
     set_parameter_if_not_set("framerate", framerate_);
     get_parameter_or("framerate", framerate_, framerate_);
     if (framerate_ <= 0)
@@ -69,16 +74,13 @@ namespace usb_cam {
         std::chrono::milliseconds(static_cast<long int>(period_ms)),
         std::bind(&UsbCam::update, this));
     INFO("starting timer " << period_ms);
-  }
 
-  void UsbCam::init()
-  {
     // TODO(lucasw) use unique_ptr to reduce copies, see
     // demos/intra_process_demo/include/image_pipeline/camera_node.hpp
     // img_ = std::make_shared<sensor_msgs::msg::Image>();
     // advertise the main image topic
     // image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("image_raw");
-    image_pub_ = core_->get_create_publisher("image_raw", shared_from_this());
+    image_pub_ = get_create_internal_publisher("image_raw");
 
     // grab the parameters
     get_parameter_or("video_device", video_device_name_, video_device_name_);
@@ -267,9 +269,9 @@ namespace usb_cam {
 
   void UsbCam::update()
   {
-    if (!initted_) {
-      init();
-    }
+    // if (!initted_) {
+    //  postInit();
+    // }
     // INFO("thread id 0x" << std::hex << std::this_thread::get_id() << std::dec);
     std::lock_guard<std::mutex> update_lock(mutex_);
     if (cam_.is_capturing()) {

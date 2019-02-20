@@ -43,7 +43,9 @@ int main(int argc, char * argv[])
   rclcpp::init(argc, argv);
   const bool ros_enable = true;
   auto core = std::make_shared<internal_pub_sub::Core>(ros_enable);
-  auto usb_cam = std::make_shared<usb_cam::UsbCam>(core);
+  auto usb_cam = std::make_shared<usb_cam::UsbCam>();
+  usb_cam->init("usb_cam");
+  usb_cam->postInit(core);
   rclcpp::spin(usb_cam);
   rclcpp::shutdown();
   return 0;
