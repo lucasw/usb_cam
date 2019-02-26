@@ -80,7 +80,7 @@ namespace usb_cam {
     // img_ = std::make_shared<sensor_msgs::msg::Image>();
     // advertise the main image topic
     // image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("image_raw");
-    image_pub_ = get_create_internal_publisher("image_raw");
+    image_pub_ = create_internal_publisher("image_raw");
 
     // grab the parameters
     get_parameter_or("video_device", video_device_name_, video_device_name_);
