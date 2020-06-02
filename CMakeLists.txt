@@ -8,7 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   camera_info_manager
   image_transport
   roscpp
-  roslint
+  # roslint
   sensor_msgs
   std_msgs
   std_srvs
